@@ -25,14 +25,14 @@ public:
      * runs sequentially with try_pop_back
      * runs parallel with multiple threads' try_steal_front
      */
-    void push(DataType data) {
+    void push_back(DataType data) {
         auto bk = lock_back.load(std::memory_order_acquire);
         // try resetting the lock_front and lock_back to prevent
-        // they being too large
-        if (bk == lock_front.load(std::memory_order_acquire)) {
-            lock_front.store(0, std::memory_order_release);
-            lock_back.store(0, std::memory_order_release);
-        }
+        // they being too large - commented out since it causes race conditions
+        //if (bk == lock_front.load(std::memory_order_acquire)) {
+        //    lock_front.store(0, std::memory_order_release);
+        //    lock_back.store(0, std::memory_order_release);
+        //}
         q[bk & MASK] = std::move(data);
         lock_back.fetch_add(1, std::memory_order_release);
     }
@@ -63,9 +63,11 @@ public:
         // if there is only one item in the queue, try not steal
         // if stealing, contention with try_pop_back, failed anyway
         if (bk && ft < bk - 1) {
-            while(!lock_front.compare_exchange_weak(ft, ft + 1, std::memory_order_release, std::memory_order_relaxed));
+            // while(!lock_front.compare_exchange_weak(ft, ft + 1, std::memory_order_release, std::memory_order_relaxed));
+            ft = lock_front.fetch_add(1, std::memory_order_release);
             // check again to see any changes by push or try_pop_back
-            if (ft < lock_back.load(std::memory_order_acquire)) {
+            bk = lock_back.load(std::memory_order_acquire);
+            if (ft < bk) {
                 res = std::move(q[ft & MASK]);
                 return true;
             } else {

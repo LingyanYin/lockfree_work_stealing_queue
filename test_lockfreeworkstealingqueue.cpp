@@ -27,7 +27,7 @@ int main () {
 
     for (auto i = 0; i < 4; ++i) {
         for (auto j = 0; j < 10; ++j)
-            wsq[i].push(FunctionWrapper(sumOver));
+            wsq[i].push_back(FunctionWrapper(sumOver));
         FunctionWrapper f;
         if(wsq[i].try_pop_back(f))
             std::cout << "main thread" << f() << std::endl;
