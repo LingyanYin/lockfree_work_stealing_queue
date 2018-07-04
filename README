@@ -1,0 +1,9 @@
+It should work well in or above g++ (GCC) 8.1.1 20180502 (Red Hat 8.1.1-1)
+
+Attention: now the testing is very simple, and it will block (do-while true)
+
+Compile: 
+g++ -o test_lockfreeworkstealingqueue.o test_lockfreeworkstealingqueue.cpp -pthread
+
+Run:
+./test_lockfreeworkstealingqueue.o
