@@ -3,25 +3,28 @@
 
 class FunctionWrapper {
 private:
-    struct impl_base {
-        virtual int call() = 0;
-        virtual ~impl_base() {}
+    class ImplInterface {
+    public:
+        virtual int invoke() = 0;
+        virtual ~ImplInterface() {}
     };
-    std::unique_ptr<impl_base> impl;
+
+    std::unique_ptr<ImplInterface> impl;
 
     template <typename F>
-    struct impl_type : impl_base {
+    class Impl : public ImplInterface {
+    private:
         F f;
-        impl_type(F&& f_) : f(std::move(f_)) {}
-        int call() override { return f(); } 
+    public:
+        Impl(F&& f_) : f(std::move(f_)) {}
+        int invoke() override { return f(); } 
     };
     
 public: 
-
     template <typename F>
-    FunctionWrapper(F&& f_) : impl(new impl_type<F>(std::move(f_))) {}
+    FunctionWrapper(F&& f_) : impl(new Impl<F>(std::move(f_))) {}
 
-    int operator()() { return impl->call(); }
+    int operator()() { return impl->invoke(); }
 
     FunctionWrapper() = default;
     FunctionWrapper(FunctionWrapper&& other) : impl(std::move(other.impl)) {}
@@ -29,7 +32,6 @@ public:
         impl = std::move(other.impl);
         return *this;
     }
-
 
     FunctionWrapper(const FunctionWrapper&) = delete;
     FunctionWrapper(FunctionWrapper&) = delete;
