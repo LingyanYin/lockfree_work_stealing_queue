@@ -21,9 +21,13 @@ public:
     LockFreeWorkStealingQueue& operator=(const LockFreeWorkStealingQueue&) = delete;
 
     /**
-     * always add a new item to the back of the queue
+     * add a new item to the back of the queue
      * runs sequentially with try_pop_back
      * runs parallel with multiple threads' try_steal_front
+     *
+     * NOTE: If this makes the queue's size 2048 or more, the behavior is undefined or
+     * the contents are overwritten which will never get popped or stolen. 
+     * If this is the 2^32th call to push, the behavior is undefined.
      */
     void push_back(DataType data) {
         auto bk = lock_back.load(std::memory_order_acquire);
