@@ -3,33 +3,17 @@
 
 class FunctionWrapper {
 private:
-    class ImplInterface {
-    public:
-        virtual int invoke() = 0;
-        virtual ~ImplInterface() {}
-    };
-
-    std::unique_ptr<ImplInterface> impl;
-
-    template <typename F>
-    class Impl : public ImplInterface {
-    private:
-        F f;
-    public:
-        Impl(F&& f_) : f(std::move(f_)) {}
-        int invoke() override { return f(); } 
-    };
-    
+    std::function<void()> callback;
 public: 
-    template <typename F>
-    FunctionWrapper(F&& f_) : impl(new Impl<F>(std::move(f_))) {}
+    template <typename F, typename... Args>
+    FunctionWrapper(F&& f_, Args&&... args_) : callback([f_, args_...]() { f_(args_...); }) {}
 
-    int operator()() { return impl->invoke(); }
+    void operator()() { callback(); }
 
     FunctionWrapper() = default;
-    FunctionWrapper(FunctionWrapper&& other) : impl(std::move(other.impl)) {}
+    FunctionWrapper(FunctionWrapper&& other) : callback(std::move(other.callback)) {}
     FunctionWrapper& operator=(FunctionWrapper&& other) {
-        impl = std::move(other.impl);
+        callback = std::move(other.callback);
         return *this;
     }
 

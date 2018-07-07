@@ -37,6 +37,7 @@ public:
         //    lock_front.store(0, std::memory_order_release);
         //    lock_back.store(0, std::memory_order_release);
         //}
+        //std::cout << "bk: " << (bk&MASK) << "&q[bk]: " << &(q[bk &MASK]) << std::endl;
         q[bk & MASK] = std::move(data);
         lock_back.fetch_add(1, std::memory_order_release);
     }
@@ -51,6 +52,7 @@ public:
         auto bk = lock_back.load(std::memory_order_acquire);
         if (bk > ft) {
             while(bk && !lock_back.compare_exchange_weak(bk, bk - 1, std::memory_order_release, std::memory_order_relaxed));
+            // std::cout << "bk-1: " << (bk-1 & MASK) << "q's itemaddr: " << &(q[(bk - 1) & MASK]) << std::endl;
             res = std::move(q[(bk - 1) & MASK]);
             return true;
         }
@@ -66,7 +68,7 @@ public:
         auto bk = lock_back.load(std::memory_order_acquire);
         // if there is only one item in the queue, try not steal
         // if stealing, contention with try_pop_back, failed anyway
-        if (bk && ft < bk - 1) {
+        if (bk && ft < bk/* - 1*/) {
             // while(!lock_front.compare_exchange_weak(ft, ft + 1, std::memory_order_release, std::memory_order_relaxed));
             ft = lock_front.fetch_add(1, std::memory_order_release);
             // check again to see any changes by push or try_pop_back
