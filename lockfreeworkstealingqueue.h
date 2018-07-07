@@ -70,7 +70,7 @@ public:
         // if stealing, contention with try_pop_back, failed anyway
         if (bk && ft < bk/* - 1*/) {
             // while(!lock_front.compare_exchange_weak(ft, ft + 1, std::memory_order_release, std::memory_order_relaxed));
-            ft = lock_front.fetch_add(1, std::memory_order_release);
+            ft = lock_front.fetch_add(1, std::memory_order_acq_rel);
             // check again to see any changes by push or try_pop_back
             bk = lock_back.load(std::memory_order_acquire);
             if (ft < bk) {
@@ -78,7 +78,7 @@ public:
                 return true;
             } else {
                 // nothing to steal, reset lock_front
-                lock_front.fetch_sub(1, std::memory_order_release);
+                lock_front.fetch_sub(1, std::memory_order_acq_rel);
             }
         }
         return false;
