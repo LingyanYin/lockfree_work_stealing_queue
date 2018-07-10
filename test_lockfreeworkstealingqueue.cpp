@@ -69,6 +69,7 @@ int main () {
         }
     }
 
+    std::cout << "All results are " << res[0] << std::endl;
     std::cout << "main thread: gCounter=" << gCounter.load(std::memory_order_acquire) << std::endl;
     assert(gCounter.load(std::memory_order_acquire) == NUM);
 
