@@ -1,9 +1,15 @@
-It should work well in or above g++ (GCC) 8.1.1 20180502 (Red Hat 8.1.1-1)
 
-Attention: now the testing is very simple
+===C++14===
 
-Compile: 
+===Compiler===
+g++ (GCC) 8.1.1 20180502 (Red Hat 8.1.1-1) or above
+
+===OS===
+Linux
+
+===Compile=== 
 g++ -o test_lockfreeworkstealingqueue.o test_lockfreeworkstealingqueue.cpp -pthread
 
-Run:
+
+===Run===
 ./test_lockfreeworkstealingqueue.o
