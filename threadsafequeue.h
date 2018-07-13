@@ -42,13 +42,13 @@ private:
 
     // wait, grab lock_head and pop head
     std::unique_ptr<node> wait_pop_head() {
-        std::unique_lock<std::mutex> head_lk(wait_for_data);
+        std::unique_lock<std::mutex> head_lk(&ThreadSafeQueue::wait_for_data);
         return pop_head();
     }
 
     // wait, grab lock_head and pop head
     std::unique_ptr<node> wait_pop_head(T& value) {
-        std::unique_lock<std::mutex> head_lk(wait_for_data);
+        std::unique_lock<std::mutex> head_lk(&ThreadSafeQueue::wait_for_data);
         value = std::move(*(head->data));
         return pop_head();
     }

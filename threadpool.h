@@ -15,11 +15,19 @@ class ThreadPool {
 private:
     using TaskType = FunctionWrapper; 
 
+    /**
+     * members guaranteed to be initialized by order of 
+     * declaration and destroyed in reverse order
+     */
     std::atomic<bool> done;
-    std::vector<std::thread> threads;
-    ThreadWrapper joiner;
+    std::atomic<unsigned int> cur_queues_size;
+    // Note: ensure that queues and pool_queue are destroyed 
+    // AFTER threads join
     std::vector<std::unique_ptr<LockFreeWorkStealingQueue> > queues;
     ThreadSafeQueue<TaskType> pool_queue;
+    // these two must come after all queues
+    std::vector<std::thread> threads;
+    ThreadWrapper joiner;
 
     static thread_local LockFreeWorkStealingQueue* local_queue;
     static thread_local unsigned int idx;
@@ -46,14 +54,12 @@ private:
 
     bool pop_task_from_other_thread_queue(TaskType& task) {
         // std::cout << "thread-" << idx << " inside pop_task_from_other_thread_queue\n";
-        // possible race conditions
-        auto sz = queues.size(); // increasing by other threads possibly while initialization
+        // possible race conditions - with queues.push_back()
+        //auto sz = queues.size(); // increasing by other threads possibly while initialization
+        auto sz = cur_queues_size.load(std::memory_order_acquire);
         for (auto i = 0; i < sz; ++i) {
             const unsigned int index = (idx+1+i) % sz;
-            // if queue[otherthreadid] was already destoryed since
-            // other threads exit
-            // BUG: between testing and using, there is gap that queues[index]
-            // could be destroyed!
+            // if queues.size() has no issue, this one does not either
             if (queues[index] && queues[index]->try_steal_front(task)) {
                 return true;
             }
@@ -63,13 +69,16 @@ private:
 
 public:
     ThreadPool() : done(false), joiner(threads) {
+        cur_queues_size.store(0, std::memory_order_relaxed);
         const unsigned int thread_count = std::thread::hardware_concurrency();
 
         try {
             queues.reserve(thread_count);
             threads.reserve(thread_count);
             for (unsigned int i = 0; i < thread_count; ++i) {
+                // possible race conditions - with queues.size()
                 queues.push_back(std::make_unique<LockFreeWorkStealingQueue>());
+                cur_queues_size.fetch_add(1, std::memory_order_release);
                 threads.push_back(std::thread(&ThreadPool::worker_thread, this, i));
                 std::cout << "thread: " << i << " was created.\n";
             }
