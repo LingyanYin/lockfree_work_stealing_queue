@@ -2,6 +2,7 @@
 #include <condition_variable>
 #include <memory>
 
+// for debug
 #include <cassert>
 
 template <typename T>
@@ -64,10 +65,7 @@ private:
         std::lock_guard<std::mutex> head_lk(lock_head);
         if (head.get() == get_tail())
             return std::unique_ptr<node>{};
-        // BUG: it seems race condition here - head will become nullptr
-        // if I run test_threadpool which does not make any sense
-        // OK, I mean I do not know why this happens...
-        assert(head != nullptr);
+        // assert(head != nullptr);
         value = std::move(*(head->data));
         return pop_head();
     }

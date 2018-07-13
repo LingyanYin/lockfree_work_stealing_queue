@@ -6,7 +6,7 @@ g++ (GCC) 8.1.1 20180502 (Red Hat 8.1.1-1) or above
 clang version 6.0.0 or above
 
 ===OS===
-Linux/iOS
+Linux/MacOS
 
 ===Compile=== 
 g++ -o test_lockfreeworkstealingqueue.o test_lockfreeworkstealingqueue.cpp -pthread
