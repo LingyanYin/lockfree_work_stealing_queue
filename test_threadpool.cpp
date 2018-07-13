@@ -44,7 +44,7 @@ int main () {
         assert(res[i] == res[0]);
     }
 
-    //std::cout << "All results are " << res[0] << std::endl;
+    std::cout << "All results are " << res[0] << std::endl;
 
     return 0;
 }

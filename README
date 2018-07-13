@@ -9,7 +9,8 @@ Linux
 
 ===Compile=== 
 g++ -o test_lockfreeworkstealingqueue.o test_lockfreeworkstealingqueue.cpp -pthread
-
+g++ -g -o test_threadpool.o test_threadpool.cpp -pthread
 
 ===Run===
 ./test_lockfreeworkstealingqueue.o
+./test_threadpool.o
