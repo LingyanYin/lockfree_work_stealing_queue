@@ -54,12 +54,9 @@ private:
 
     bool pop_task_from_other_thread_queue(TaskType& task) {
         // std::cout << "thread-" << idx << " inside pop_task_from_other_thread_queue\n";
-        // possible race conditions - with queues.push_back()
-        //auto sz = queues.size(); // increasing by other threads possibly while initialization
         auto sz = cur_queues_size.load(std::memory_order_acquire);
         for (auto i = 0; i < sz; ++i) {
             const unsigned int index = (idx+1+i) % sz;
-            // if queues.size() has no issue, this one does not either
             if (queues[index] && queues[index]->try_steal_front(task)) {
                 return true;
             }
@@ -76,7 +73,6 @@ public:
             queues.reserve(thread_count);
             threads.reserve(thread_count);
             for (unsigned int i = 0; i < thread_count; ++i) {
-                // possible race conditions - with queues.size()
                 queues.push_back(std::make_unique<LockFreeWorkStealingQueue>());
                 cur_queues_size.fetch_add(1, std::memory_order_release);
                 threads.push_back(std::thread(&ThreadPool::worker_thread, this, i));
@@ -91,6 +87,13 @@ public:
 
     ~ThreadPool() {
         done = true;
+
+        // explicitly call dtor in order to make sure
+        // they are destroyed in correct order
+        // joiner.~ThreadWrapper();
+        // threads.~vector<std::thread>();
+        // pool_queue.~ThreadSafeQueue();
+        // queues.~vector<std::unique_ptr<LockFreeWorkStealingQueue>>();
     }
 
     template <typename FunctionType, typename... Args>
@@ -102,7 +105,7 @@ public:
         if (local_queue) {
             local_queue->push_back(FunctionWrapper(std::move(task), std::forward<Args>(args)...));
         } else {
-            std::cout << "pushing to pool_queue******************\n";
+            // std::cout << "pushing to pool_queue******************\n";
             pool_queue.push(FunctionWrapper(std::move(task), std::forward<Args>(args)...));
         }
 
@@ -114,7 +117,7 @@ public:
         TaskType task;
         if (pop_task_from_local_queue(task) || pop_task_from_pool_queue(task) ||
                 pop_task_from_other_thread_queue(task)) {
-            std::cout << "thread-" << idx << " invoke task().\n";
+            // std::cout << "thread-" << idx << " invoke task().\n";
             task();
         } else {
             // std::cout << "thread-" << idx << " no task to run, yield.\n";

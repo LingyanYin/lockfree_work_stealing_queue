@@ -36,7 +36,7 @@ int main () {
     std::cout << "threadpool was destroyed.\n";
 
     for (auto i = 0; i < tasknum; ++i) {
-        // futures[i].get(); // seg fault
+        futures[i].get();
         if (res[i] != res[0]) {
             std::cout << "res[" << i << "]=" << res[i] << std::endl;
             std::cout << "res[0]=" << res[0] << std::endl;
